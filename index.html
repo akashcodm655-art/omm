@@ -208,6 +208,20 @@ function App(){
   const [activeCat,setActiveCat]=useState('All');
   const [search,setSearch]=useState('');
   const [toast,setToast]=useState('');
+  const [showAdminLogin,setShowAdminLogin]=useState(false);
+  const [adminAuthed,setAdminAuthed]=useState(false);
+  const [adminPass,setAdminPass]=useState('');
+  const [adminTab,setAdminTab]=useState('products');
+  const [adminError,setAdminError]=useState('');
+  const [products,setProducts]=useState(PRODUCTS);
+  const [newProd,setNewProd]=useState({name:'',price:'',mrp:'',category:'Immunity',tag:'New',desc:'',ingredients:'',dosage:'',image:'🌿'});
+  const [orders]=useState([
+    {id:'ORD001',customer:'Rahul Sharma',items:'Ashwagandha x2',amount:698,status:'Delivered',awb:'BD123456789',date:'2025-03-10'},
+    {id:'ORD002',customer:'Priya Mehta',items:'Triphala + Giloy',amount:448,status:'Shipped',awb:'BD987654321',date:'2025-03-12'},
+    {id:'ORD003',customer:'Amit Patel',items:'Kumkumadi Tailam',amount:599,status:'Confirmed',awb:'BD112233445',date:'2025-03-14'},
+    {id:'ORD004',customer:'Sneha Joshi',items:'Chyawanprash x1',amount:449,status:'Delivered',awb:'BD556677889',date:'2025-03-08'},
+    {id:'ORD005',customer:'Vikram Nair',items:'Brahmi Capsules x2',amount:640,status:'Shipped',awb:'BD998877665',date:'2025-03-13'},
+  ]);
 
   const cartCount=cart.reduce((s,i)=>s+i.qty,0);
   const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(''),2200);};
@@ -215,7 +229,7 @@ function App(){
     setCart(prev=>{const ex=prev.find(i=>i.id===p.id);return ex?prev.map(i=>i.id===p.id?{...i,qty:i.qty+1}:i):[...prev,{...p,qty:1}];});
     showToast(p.name+" added to cart!");
   };
-  const filtered=PRODUCTS.filter(p=>{
+  const filtered=products.filter(p=>{
     const mc=activeCat==='All'||p.category===activeCat;
     const ms=!search||p.name.toLowerCase().includes(search.toLowerCase())||p.category.toLowerCase().includes(search.toLowerCase());
     return mc&&ms;
@@ -463,15 +477,147 @@ function App(){
               <div style={{marginTop:12,fontSize:10,opacity:0.4}}>GST: 27XXXXX1234X · Drug Lic: MH-PNV-2024</div>
             </div>
           </div>
-          <div style={{borderTop:'1px solid rgba(255,255,255,0.08)',paddingTop:18,display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:10}}>
+          <div style={{borderTop:'1px solid rgba(255,255,255,0.08)',paddingTop:18,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10}}>
             <div style={{fontSize:11,opacity:0.4}}>© 2025 Omm Ayurved Store. All rights reserved.</div>
-            <div style={{fontSize:11,opacity:0.4}}>Razorpay · Blue Dart · Vercel + Supabase</div>
+            <button onClick={()=>{setShowAdminLogin(true);setAdminError('');setAdminPass('');}} style={{background:'none',border:'1px solid rgba(255,255,255,0.2)',color:'rgba(255,255,255,0.5)',fontSize:11,padding:'5px 12px',borderRadius:20,cursor:'pointer',display:'flex',alignItems:'center',gap:5}}>🔑 Admin Login</button>
           </div>
         </div>
       </footer>
 
       {cartOpen&&<CartSidebar cart={cart} onClose={()=>setCartOpen(false)} onRemove={id=>setCart(p=>p.filter(i=>i.id!==id))} onQty={(id,d)=>setCart(p=>p.map(i=>i.id===id?{...i,qty:Math.max(1,i.qty+d)}:i))}/>}
       {modal&&<ProductModal p={modal} onClose={()=>setModal(null)} onAdd={addToCart}/>}
+
+      {showAdminLogin&&!adminAuthed&&(
+        <div style={{position:'fixed',inset:0,zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.65)',backdropFilter:'blur(4px)'}}>
+          <div style={{background:'#fff',borderRadius:20,padding:'36px 32px',width:340,boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
+            <div style={{textAlign:'center',marginBottom:24}}>
+              <div style={{width:60,height:60,background:'#4F7942',borderRadius:50,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,margin:'0 auto 12px'}}>🔑</div>
+              <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:'#4B3621',margin:0}}>Admin Login</h2>
+              <p style={{fontSize:12,color:'#aaa',marginTop:4}}>Omm Ayurved Store</p>
+            </div>
+            <input type="password" value={adminPass} onChange={e=>setAdminPass(e.target.value)}
+              onKeyDown={e=>{if(e.key==='Enter'){if(adminPass==='admin123'){setAdminAuthed(true);setAdminError('');}else setAdminError('Incorrect password');}}}
+              placeholder="Enter admin password" style={{width:'100%',padding:'11px 14px',borderRadius:10,border:'1px solid #ddd',fontSize:14,outline:'none',marginBottom:8,boxSizing:'border-box'}}/>
+            {adminError&&<div style={{fontSize:12,color:'#e33',marginBottom:8,textAlign:'center'}}>{adminError}</div>}
+            <button onClick={()=>{if(adminPass==='admin123'){setAdminAuthed(true);setAdminError('');}else setAdminError('Incorrect password');}}
+              style={{width:'100%',padding:'12px',background:'#4F7942',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:700,cursor:'pointer',marginBottom:10}}>Login</button>
+            <button onClick={()=>{setShowAdminLogin(false);setAdminPass('');setAdminError('');}}
+              style={{width:'100%',padding:'10px',background:'transparent',color:'#999',border:'1px solid #eee',borderRadius:10,fontSize:13,cursor:'pointer'}}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {adminAuthed&&(
+        <div style={{position:'fixed',inset:0,zIndex:2000,background:'#f5f5f5',overflowY:'auto'}}>
+          <div style={{background:'#4F7942',padding:'16px 28px',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,zIndex:10}}>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:36,height:36,background:'rgba(255,255,255,0.2)',borderRadius:50,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>🌿</div>
+              <div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,fontWeight:700,color:'#fff'}}>Admin Dashboard</div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.7)'}}>Omm Ayurved Store</div>
+              </div>
+            </div>
+            <button onClick={()=>{setAdminAuthed(false);setShowAdminLogin(false);setAdminTab('products');}}
+              style={{background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.3)',color:'#fff',padding:'7px 16px',borderRadius:20,fontSize:12,cursor:'pointer',fontWeight:600}}>🚪 Logout</button>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,padding:'20px 28px 0'}}>
+            {[['📦','Total Products',products.length],['🛒','Total Orders',orders.length],['💰','Revenue','₹'+orders.reduce((s,o)=>s+o.amount,0).toLocaleString()]].map(([ic,lbl,val])=>(
+              <div key={lbl} style={{background:'#fff',borderRadius:12,padding:'16px 20px',border:'1px solid #e8e0d0',display:'flex',alignItems:'center',gap:12}}>
+                <span style={{fontSize:28}}>{ic}</span>
+                <div><div style={{fontSize:11,color:'#aaa',marginBottom:2}}>{lbl}</div><div style={{fontSize:20,fontWeight:700,color:'#4B3621'}}>{val}</div></div>
+              </div>
+            ))}
+          </div>
+          <div style={{display:'flex',gap:8,padding:'20px 28px 0'}}>
+            {[['products','📦 Products'],['orders','🛒 Orders'],['add','➕ Add Product']].map(([tab,lbl])=>(
+              <button key={tab} onClick={()=>setAdminTab(tab)} style={{padding:'9px 20px',borderRadius:50,cursor:'pointer',fontSize:13,fontWeight:600,background:adminTab===tab?'#4F7942':'#fff',color:adminTab===tab?'#fff':'#888',border:'1px solid',borderColor:adminTab===tab?'#4F7942':'#ddd'}}>{lbl}</button>
+            ))}
+          </div>
+          <div style={{padding:'20px 28px 40px'}}>
+            {adminTab==='products'&&(
+              <div>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:'#4B3621',marginBottom:16}}>All Products ({products.length})</h3>
+                <div style={{display:'grid',gap:10}}>
+                  {products.map(p=>(
+                    <div key={p.id} style={{background:'#fff',borderRadius:12,padding:'14px 18px',display:'flex',alignItems:'center',gap:14,border:'1px solid #e8e0d0'}}>
+                      <span style={{fontSize:32,flexShrink:0}}>{p.image}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontWeight:700,color:'#4B3621',fontSize:14}}>{p.name}</div>
+                        <div style={{fontSize:12,color:'#888',marginTop:2}}>{p.category} · ₹{p.price} <span style={{textDecoration:'line-through',color:'#ccc'}}>₹{p.mrp}</span></div>
+                      </div>
+                      <div style={{display:'flex',gap:8,flexShrink:0}}>
+                        <span style={{fontSize:10,background:'#e8f2e5',color:'#4F7942',padding:'3px 10px',borderRadius:20,fontWeight:600}}>{p.tag}</span>
+                        <button onClick={()=>setProducts(prev=>prev.filter(x=>x.id!==p.id))}
+                          style={{background:'#fee',border:'1px solid #fcc',color:'#e33',padding:'4px 10px',borderRadius:8,fontSize:12,cursor:'pointer',fontWeight:600}}>🗑 Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {adminTab==='orders'&&(
+              <div>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:'#4B3621',marginBottom:16}}>Order Tracker</h3>
+                <div style={{display:'grid',gap:10}}>
+                  {orders.map(o=>(
+                    <div key={o.id} style={{background:'#fff',borderRadius:12,padding:'16px 20px',border:'1px solid #e8e0d0'}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:8}}>
+                        <div>
+                          <div style={{fontWeight:700,color:'#4B3621',fontSize:14}}>{o.id} — {o.customer}</div>
+                          <div style={{fontSize:12,color:'#888',marginTop:3}}>{o.items}</div>
+                          <div style={{fontSize:11,color:'#aaa',marginTop:3}}>📅 {o.date} · 🚚 AWB: <b style={{color:'#4F7942'}}>{o.awb}</b></div>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          <div style={{fontSize:16,fontWeight:700,color:'#4B3621'}}>₹{o.amount}</div>
+                          <span style={{fontSize:11,fontWeight:700,padding:'3px 10px',borderRadius:20,background:o.status==='Delivered'?'#e8f2e5':o.status==='Shipped'?'#e3f4f7':'#fdf3e3',color:o.status==='Delivered'?'#4F7942':o.status==='Shipped'?'#2a7a8a':'#c17f3a'}}>
+                            {o.status==='Delivered'?'✓ ':o.status==='Shipped'?'🚚 ':'✅ '}{o.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {adminTab==='add'&&(
+              <div style={{maxWidth:560}}>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:'#4B3621',marginBottom:16}}>Add New Product</h3>
+                <div style={{background:'#fff',borderRadius:16,padding:'24px',border:'1px solid #e8e0d0',display:'grid',gap:12}}>
+                  {[['name','Product Name'],['price','Price (₹)'],['mrp','MRP (₹)'],['tag','Badge Tag'],['desc','Description'],['ingredients','Ingredients'],['dosage','Dosage']].map(([key,lbl])=>(
+                    <div key={key}>
+                      <div style={{fontSize:12,fontWeight:600,color:'#4B3621',marginBottom:4}}>{lbl}</div>
+                      <input value={newProd[key]} onChange={e=>setNewProd(p=>({...p,[key]:e.target.value}))}
+                        style={{width:'100%',padding:'9px 12px',border:'1px solid #ddd',borderRadius:8,fontSize:13,outline:'none',boxSizing:'border-box'}}/>
+                    </div>
+                  ))}
+                  <div>
+                    <div style={{fontSize:12,fontWeight:600,color:'#4B3621',marginBottom:4}}>Category</div>
+                    <select value={newProd.category} onChange={e=>setNewProd(p=>({...p,category:e.target.value}))}
+                      style={{width:'100%',padding:'9px 12px',border:'1px solid #ddd',borderRadius:8,fontSize:13,outline:'none'}}>
+                      {['Immunity','Digestion','Skin Care','Hair Care','Mind & Brain',"Women's Health"].map(c=><option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:600,color:'#4B3621',marginBottom:4}}>Icon Emoji</div>
+                    <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                      {['🌿','🍃','🌸','💆','🌱','🍯','🧠','🌺','⚗️','🪴'].map(e=>(
+                        <button key={e} onClick={()=>setNewProd(p=>({...p,image:e}))}
+                          style={{width:38,height:38,fontSize:20,border:newProd.image===e?'2px solid #4F7942':'1px solid #ddd',borderRadius:8,cursor:'pointer',background:newProd.image===e?'#e8f2e5':'#fff'}}>{e}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <button onClick={()=>{
+                    if(!newProd.name||!newProd.price||!newProd.mrp){alert('Fill in Name, Price and MRP');return;}
+                    setProducts(prev=>[...prev,{...newProd,id:Date.now(),price:Number(newProd.price),mrp:Number(newProd.mrp),rating:4.5,reviews:0}]);
+                    setNewProd({name:'',price:'',mrp:'',category:'Immunity',tag:'New',desc:'',ingredients:'',dosage:'',image:'🌿'});
+                    setAdminTab('products');showToast('Product added!');
+                  }} style={{padding:'13px',background:'#4F7942',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:700,cursor:'pointer'}}>➕ Add Product</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
